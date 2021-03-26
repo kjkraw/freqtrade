@@ -20,6 +20,7 @@ from freqtrade.exchange.exchange import timeframe_to_next_date
 from freqtrade.persistence import PairLocks, Trade
 from freqtrade.strategy.strategy_wrapper import strategy_safe_wrapper
 from freqtrade.wallets import Wallets
+from freqtrade.strategy.roi import stepped_roi
 
 
 logger = logging.getLogger(__name__)
@@ -143,6 +144,9 @@ class IStrategy(ABC):
         self.config = config
         # Dict to determine if analysis is necessary
         self._last_candle_seen_per_pair: Dict[str, datetime] = {}
+
+        if self.minimal_roi:
+            self.minimum_roi_fn = stepped_roi(self.minimal_roi)
 
     @abstractmethod
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
