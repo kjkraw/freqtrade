@@ -7,7 +7,7 @@ import warnings
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Dict, List, NamedTuple, Optional, Tuple
+from typing import Dict, List, NamedTuple, Optional, Tuple, Callable
 
 import arrow
 from pandas import DataFrame
@@ -80,6 +80,9 @@ class IStrategy(ABC):
     _sell_fun_len: int = 0
     # associated minimal roi
     minimal_roi: Dict
+
+    # function for calculating minimal roi
+    minimum_roi_fn: Callable[[int], Optional[float]]
 
     # associated stoploss
     stoploss: float
@@ -650,11 +653,11 @@ class IStrategy(ABC):
         """
         # Check if time matches and current rate is above threshold
         trade_dur = int((current_time.timestamp() - trade.open_date_utc.timestamp()) // 60)
-        _, roi = self.min_roi_reached_entry(trade_dur)
-        if roi is None:
+        min_roi = self.minimum_roi_fn(trade_dur)
+        if min_roi is None:
             return False
         else:
-            return current_profit > roi
+            return current_profit > min_roi
 
     def ohlcvdata_to_dataframe(self, data: Dict[str, DataFrame]) -> Dict[str, DataFrame]:
         """
